@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LearningToRank", "LearningToRank\LearningToRank.csproj", "{D1EB9361-3CBA-4F4B-844E-E5344BB98953}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainLtR", "TrainLtR\TrainLtR.csproj", "{D188E5D7-D491-422B-A1E8-9BDD43C01235}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PredictLtR", "PredictLtR\PredictLtR.csproj", "{7C3BF84F-BCA8-4734-BFD9-484FAB17EA3D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D1EB9361-3CBA-4F4B-844E-E5344BB98953}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D1EB9361-3CBA-4F4B-844E-E5344BB98953}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D1EB9361-3CBA-4F4B-844E-E5344BB98953}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D1EB9361-3CBA-4F4B-844E-E5344BB98953}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D188E5D7-D491-422B-A1E8-9BDD43C01235}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D188E5D7-D491-422B-A1E8-9BDD43C01235}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D188E5D7-D491-422B-A1E8-9BDD43C01235}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D188E5D7-D491-422B-A1E8-9BDD43C01235}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C3BF84F-BCA8-4734-BFD9-484FAB17EA3D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C3BF84F-BCA8-4734-BFD9-484FAB17EA3D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C3BF84F-BCA8-4734-BFD9-484FAB17EA3D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C3BF84F-BCA8-4734-BFD9-484FAB17EA3D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
