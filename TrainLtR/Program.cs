@@ -15,7 +15,7 @@ namespace Train
 
             if (args.Length < 2)
             {
-                Console.WriteLine("Usage: Train.exe <train.ltr> <model.ltr>");
+                Console.WriteLine("Usage: Train.exe <train.ltr> <model.bin>");
                 return;
             }
 

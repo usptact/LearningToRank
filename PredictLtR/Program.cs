@@ -69,7 +69,6 @@ namespace Predict
                 Console.WriteLine("\n");
             }
 
-            Console.ReadKey();
         }
     }
 }
