@@ -12,7 +12,7 @@ The training tool accepts a SVM-Light formatted file (input) and a model filenam
 The prediction tool accepts a model file (input) and a SVM-Light formatted file (input). The predictions are rank distributions and are printed to the console.
 
 ## Prerequisites
-The only prerequisite to compile and run the model is the Infer.NET framework. Please note that it has a different and very restrictive license!
+The only prerequisite to compile and run the model is the [Infer.NET](http://infernet.azurewebsites.net/) framework. Please note that it has a different and very restrictive license!
 
 If you would like to modify the model, some familiarity with graphical models (factor graphs in particular) is required.
 
