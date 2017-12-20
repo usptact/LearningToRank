@@ -15,6 +15,8 @@ The prediction tool accepts a model file (input) and a SVM-Light formatted file 
 The graphical model for LtR is the modified TrueSkill/Thurstonian type model. The difference is that the observed feature vectors are introduced.
 
 There are `K` training examples. Each training example has a variable number of items (`n` in figure). There are `m=n-1` pairwise preference observations per example.
+
+Slightly abusing factor graph notation, the random variables `w` and `noise` are inside the plate but with different notation. In the model, there is a single random variable for each that is inferred.
 ![TrueSkill/Thurstonian model for LtR](https://github.com/usptact/LearningToRank/blob/master/img/LtR%20Graphical%20Model.png)
 
 ## Building
