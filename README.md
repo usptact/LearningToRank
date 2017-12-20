@@ -11,6 +11,9 @@ The training tool accepts a SVM-Light formatted file (input) and a model filenam
 
 The prediction tool accepts a model file (input) and a SVM-Light formatted file (input). The predictions are rank distributions and are printed to the console.
 
+## Graphical Model
+![TrueSkill/Thurstonian model for LtR](https://github.com/usptact/LearningToRank/blob/master/img/LtR%20Graphical%20Model.png)
+
 ## Building
 Open the solution and run build: "Build" -> "Build Solution" or Ctrl+Shift+B. Tested with Visual Studio 2017 Community Edition.
 
