@@ -43,7 +43,7 @@ fval ::= <float>
 Feature ids are expected to start from 1!
 
 ## Usage
-Prepare training dataset in SVM-Light format. Make sure that the items within an example are shuffled. This enables the model to better learn pairwise preferences and do prediction on unseen test data (order of items in examples of the dataset are of course unknown apriori).
+Prepare training dataset in SVM-Light format. Make sure that the items within an example are shuffled (for 2 ranks only!). This enables the model to better learn pairwise preferences and do prediction on unseen test data (order of items in examples of the dataset are of course unknown apriori). If there are more than 2 ranks, the items in an example must be sorted so that the model can learn the preferences correctly.
 
 Run `Train.exe <train.ltr> <model.bin>` to train a model. Parallel training is enabled by default and may use large amounts of RAM on large datasets!
 
