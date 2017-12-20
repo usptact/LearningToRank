@@ -14,6 +14,8 @@ The prediction tool accepts a model file (input) and a SVM-Light formatted file 
 ## Prerequisites
 The only prerequisite to compile and run the model is the [Infer.NET](http://infernet.azurewebsites.net/) framework. Please note that it has a different and very restrictive license!
 
+Runs just fine with .NET 4.6 under Windows. Can be run under Linux/MacOS with Mono (less tested).
+
 If you would like to modify the model, some familiarity with graphical models (factor graphs in particular) is required.
 
 ## Graphical Model
