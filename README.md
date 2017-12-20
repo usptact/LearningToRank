@@ -41,11 +41,16 @@ fval ::= <float>
 Feature ids are expected to start from 1!
 
 ## Usage
-Run `Train.exe <train.ltr> <model.bin>` to train a model.
+Prepare training dataset in SVM-Light format. Make sure that the items within an example are shuffled. This enables the model to better learn pairwise preferences and do prediction on unseen test data (order of items in examples of the dataset are of course unknown apriori).
+
+Run `Train.exe <train.ltr> <model.bin>` to train a model. Parallel training is enabled by default and may use large amounts of RAM on large datasets!
 
 Run `Predict.exe <model.bin> <predict.ltr>` to predict ranks.
 
 The current application outputs probability ranks for full picture. If only order information is required, the prediction `Program.cs` can be modified to output raw scores. Sorting in descending order will provide ranking.
+
+## Sample Data
+Check `/data` folder for data samples. All but smallest data examples are from the LETOR MQ2008 dataset.
 
 ## Notes
 This project uses the Infer.NET framework which has a separate license!
