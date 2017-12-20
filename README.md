@@ -12,6 +12,9 @@ The training tool accepts a SVM-Light formatted file (input) and a model filenam
 The prediction tool accepts a model file (input) and a SVM-Light formatted file (input). The predictions are rank distributions and are printed to the console.
 
 ## Graphical Model
+The graphical model for LtR is the modified TrueSkill/Thurstonian type model. The difference is that the observed feature vectors are introduced.
+
+There are `K` training examples. Each training example has a variable number of items (`n` in figure). There are `m=n-1` pairwise preference observations per example.
 ![TrueSkill/Thurstonian model for LtR](https://github.com/usptact/LearningToRank/blob/master/img/LtR%20Graphical%20Model.png)
 
 ## Building
