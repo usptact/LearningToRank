@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using MicrosoftResearch.Infer.Distributions;
+using Microsoft.ML.Probabilistic.Distributions;
 
 namespace Train
 {

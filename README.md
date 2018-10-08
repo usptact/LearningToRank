@@ -55,4 +55,5 @@ The current application outputs probability ranks for full picture. If only orde
 Check `/data` folder for data samples. All but smallest data examples are from the LETOR MQ2008 dataset.
 
 ## Notes
-This project uses the Infer.NET framework which has a separate license!
+Updated to use open source Infer.NET.
+

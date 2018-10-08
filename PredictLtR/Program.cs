@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
-using MicrosoftResearch.Infer.Distributions;
-using MicrosoftResearch.Infer.Maths;
+using Microsoft.ML.Probabilistic.Distributions;
+using Microsoft.ML.Probabilistic.Math;
 
 namespace Predict
 {

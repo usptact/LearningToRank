@@ -1,7 +1,8 @@
-﻿using MicrosoftResearch.Infer.Maths;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.ML.Probabilistic.Math;
+
 
 namespace Predict
 {

@@ -1,7 +1,6 @@
-﻿using MicrosoftResearch.Infer;
-using MicrosoftResearch.Infer.Models;
-using MicrosoftResearch.Infer.Maths;
-using MicrosoftResearch.Infer.Distributions;
+﻿using Microsoft.ML.Probabilistic.Models;
+using Microsoft.ML.Probabilistic.Math;
+using Microsoft.ML.Probabilistic.Distributions;
 
 namespace Predict
 {
