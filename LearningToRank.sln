@@ -1,11 +1,10 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrainLtR", "TrainLtR\TrainLtR.csproj", "{D188E5D7-D491-422B-A1E8-9BDD43C01235}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrainLtR", "TrainLtR\TrainLtR.csproj", "{D188E5D7-D491-422B-A1E8-9BDD43C01235}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PredictLtR", "PredictLtR\PredictLtR.csproj", "{7C3BF84F-BCA8-4734-BFD9-484FAB17EA3D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PredictLtR", "PredictLtR\PredictLtR.csproj", "{7C3BF84F-BCA8-4734-BFD9-484FAB17EA3D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

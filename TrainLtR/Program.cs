@@ -1,11 +1,10 @@
 ﻿using System;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
 using Microsoft.ML.Probabilistic.Distributions;
 
-namespace Train
+namespace TrainLtR
 {
-    class MainClass
+    class Program
     {
         public static void Main(string[] args)
         {
@@ -15,7 +14,7 @@ namespace Train
 
             if (args.Length < 2)
             {
-                Console.WriteLine("Usage: Train.exe <train.ltr> <model.bin>");
+                Console.WriteLine("Usage: Train.exe <train.ltr> <model.json>");
                 return;
             }
 
@@ -59,13 +58,7 @@ namespace Train
             // Save posterior distributions
             //
 
-            BinaryFormatter serializer = new BinaryFormatter();
-
-            using (FileStream stream = new FileStream(modelFileName, FileMode.Create))
-            {
-                serializer.Serialize(stream, wPosteriorDist);
-                serializer.Serialize(stream, scoresNoisePosteriorDist);
-            }
+            ModelSerializer.SerializeModel(modelFileName, wPosteriorDist, scoresNoisePosteriorDist);
         }
     }
 }

@@ -2,7 +2,7 @@
 using Microsoft.ML.Probabilistic.Math;
 using Microsoft.ML.Probabilistic.Models;
 
-namespace Predict
+namespace PredictLtR
 {
     public class PredictModel
     {
@@ -10,9 +10,9 @@ namespace Predict
         VariableArray<int> exampleSize;
         VariableArray<int> rankSize;
 
-        Range example;  // over examples in a dataset
-        Range item;     // over items in an examples
-        Range rank;     // over item pairs
+        Microsoft.ML.Probabilistic.Models.Range example;  // over examples in a dataset
+        Microsoft.ML.Probabilistic.Models.Range item;     // over items in an examples
+        Microsoft.ML.Probabilistic.Models.Range rank;     // over item pairs
 
         VariableArray<VariableArray<double>, double[][]> scores;
         VariableArray<VariableArray<Vector>, Vector[][]> features;
@@ -34,14 +34,14 @@ namespace Predict
             //
 
             numExamples = Variable.New<int>();
-            example = new Range(numExamples);
+            example = new Microsoft.ML.Probabilistic.Models.Range(numExamples);
 
             //
             // Jagged arrays for (items, features)
             //
 
             exampleSize = Variable.Array<int>(example);
-            item = new Range(exampleSize[example]);
+            item = new Microsoft.ML.Probabilistic.Models.Range(exampleSize[example]);
 
             scores = Variable.Array(Variable.Array<double>(item), example);
             features = Variable.Array(Variable.Array<Vector>(item), example);
@@ -51,7 +51,7 @@ namespace Predict
             //
 
             rankSize = Variable.Array<int>(example);
-            rank = new Range(rankSize[example]);
+            rank = new Microsoft.ML.Probabilistic.Models.Range(rankSize[example]);
 
             ranks = Variable.Array(Variable.Array<bool>(rank), example);
 

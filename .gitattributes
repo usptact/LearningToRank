@@ -1,63 +1,43 @@
-###############################################################################
-# Set default behavior to automatically normalize line endings.
-###############################################################################
+# Auto detect text files and perform LF normalization
 * text=auto
 
-###############################################################################
-# Set default behavior for command prompt diff.
-#
-# This is need for earlier builds of msysgit that does not have it on by
-# default for csharp files.
-# Note: This is only used by command line
-###############################################################################
-#*.cs     diff=csharp
+# .NET Core
+*.cs text diff=csharp
+*.csproj text diff=csproj
+*.sln text diff=csproj
+*.props text diff=csproj
+*.targets text diff=csproj
 
-###############################################################################
-# Set the merge driver for project and solution files
-#
-# Merging from the command prompt will add diff markers to the files if there
-# are conflicts (Merging from VS is not affected by the settings below, in VS
-# the diff markers are never inserted). Diff markers may cause the following 
-# file extensions to fail to load in VS. An alternative would be to treat
-# these files as binary and thus will always conflict and require user
-# intervention with every merge. To do so, just uncomment the entries below
-###############################################################################
-#*.sln       merge=binary
-#*.csproj    merge=binary
-#*.vbproj    merge=binary
-#*.vcxproj   merge=binary
-#*.vcproj    merge=binary
-#*.dbproj    merge=binary
-#*.fsproj    merge=binary
-#*.lsproj    merge=binary
-#*.wixproj   merge=binary
-#*.modelproj merge=binary
-#*.sqlproj   merge=binary
-#*.wwaproj   merge=binary
+# JSON files
+*.json text diff=json
 
-###############################################################################
-# behavior for image files
-#
-# image files are treated as binary by default.
-###############################################################################
-#*.jpg   binary
-#*.png   binary
-#*.gif   binary
+# Markdown files
+*.md text diff=markdown
 
-###############################################################################
-# diff behavior for common document formats
-# 
-# Convert binary document formats to text before diffing them. This feature
-# is only available from the command line. Turn it on by uncommenting the 
-# entries below.
-###############################################################################
-#*.doc   diff=astextplain
-#*.DOC   diff=astextplain
-#*.docx  diff=astextplain
-#*.DOCX  diff=astextplain
-#*.dot   diff=astextplain
-#*.DOT   diff=astextplain
-#*.pdf   diff=astextplain
-#*.PDF   diff=astextplain
-#*.rtf   diff=astextplain
-#*.RTF   diff=astextplain
+# Data files (LTR format)
+*.ltr text
+
+# Binary files
+*.bin binary
+*.dll binary
+*.exe binary
+*.pdb binary
+*.nupkg binary
+
+# Infer.NET GeneratedSource should be treated as generated code
+GeneratedSource/ linguist-generated=true
+**/GeneratedSource/ linguist-generated=true
+
+# Model files (can be large, treat as binary)
+*.bin linguist-generated=true
+model.json linguist-generated=true
+predictions.csv linguist-generated=true
+test_*.csv linguist-generated=true
+
+# Ensure consistent line endings
+*.cs text eol=lf
+*.csproj text eol=lf
+*.sln text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.ltr text eol=lf

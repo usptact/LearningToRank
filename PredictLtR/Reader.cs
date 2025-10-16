@@ -4,7 +4,7 @@ using System.IO;
 using Microsoft.ML.Probabilistic.Math;
 
 
-namespace Predict
+namespace PredictLtR
 {
     public class Reader
     {

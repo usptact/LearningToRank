@@ -2,7 +2,7 @@
 using Microsoft.ML.Probabilistic.Math;
 using Microsoft.ML.Probabilistic.Distributions;
 
-namespace Predict
+namespace PredictLtR
 {
     class PredictDiscriminative
     {

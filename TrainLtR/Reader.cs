@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.ML.Probabilistic.Math;
 
-namespace Train
+namespace TrainLtR
 {
     public class Reader
     {

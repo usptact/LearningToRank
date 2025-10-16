@@ -2,7 +2,7 @@
 using Microsoft.ML.Probabilistic.Math;
 using Microsoft.ML.Probabilistic.Models;
 
-namespace Train
+namespace TrainLtR
 {
     public class TrainModel
     {
@@ -10,9 +10,9 @@ namespace Train
         VariableArray<int> exampleSize;
         VariableArray<int> rankSize;
 
-        Range example;  // over N examples in a dataset
-        Range item;     // over M items in an example
-        Range pair;     // over M-1 item pairs in an example
+        Microsoft.ML.Probabilistic.Models.Range example;  // over N examples in a dataset
+        Microsoft.ML.Probabilistic.Models.Range item;     // over M items in an example
+        Microsoft.ML.Probabilistic.Models.Range pair;     // over M-1 item pairs in an example
 
         VariableArray<VariableArray<double>, double[][]> scores;
         VariableArray<VariableArray<Vector>, Vector[][]> features;
@@ -32,14 +32,14 @@ namespace Train
             //
 
             numExamples = Variable.New<int>();
-            example = new Range(numExamples);
+            example = new Microsoft.ML.Probabilistic.Models.Range(numExamples);
 
             //
             // Jagged 1-D arrays of arrays for item scores and features
             //
 
             exampleSize = Variable.Array<int>(example);
-            item = new Range(exampleSize[example]);
+            item = new Microsoft.ML.Probabilistic.Models.Range(exampleSize[example]);
 
             scores = Variable.Array(Variable.Array<double>(item), example);
             features = Variable.Array(Variable.Array<Vector>(item), example);
@@ -49,7 +49,7 @@ namespace Train
             //
 
             rankSize = Variable.Array<int>(example);
-            pair = new Range(rankSize[example]);
+            pair = new Microsoft.ML.Probabilistic.Models.Range(rankSize[example]);
 
             ranks = Variable.Array(Variable.Array<bool>(pair), example);
 
