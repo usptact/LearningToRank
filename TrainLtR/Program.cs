@@ -30,7 +30,7 @@ namespace TrainLtR
             Reader trainReader = new Reader(trainFileName);
             Data trainData = trainReader.Read();
 
-            int dimFeatures = Reader.dimFeatures + 1;
+            int dimFeatures = trainReader.dimFeatures + 1;
 
             //
             // Learn model parameters from data

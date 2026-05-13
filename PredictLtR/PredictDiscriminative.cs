@@ -1,52 +1,42 @@
-﻿using Microsoft.ML.Probabilistic.Models;
+using System;
 using Microsoft.ML.Probabilistic.Math;
-using Microsoft.ML.Probabilistic.Distributions;
 
 namespace PredictLtR
 {
     class PredictDiscriminative
     {
-        Vector w;
-        double noise;
-
-        Gaussian XPrior;
-        Gaussian YPrior;
-        Variable<Gaussian> XParam;
-        Variable<Gaussian> YParam;
-        Variable<double> X;
-        Variable<double> Y;
-        Variable<bool> XBeatsY;
-
-        InferenceEngine engine;
+        readonly Vector w;
+        readonly double noise;
 
         public PredictDiscriminative(Vector wParam, double scoreNoise)
         {
             w = wParam;
             noise = scoreNoise;
-
-            engine = new InferenceEngine();
-            engine.ShowProgress = false;
-
-            XPrior = new Gaussian(1.0, 1.0);
-            XParam = Variable.Observed(XPrior);
-            X = Variable.Random<double, Gaussian>(XParam);
-
-            YPrior = new Gaussian(1.0, 1.0);
-            YParam = Variable.Observed(YPrior);
-            Y = Variable.Random<double, Gaussian>(YParam);
-
-            XBeatsY = X > Y;
         }
 
-        // returns rank distribution for each item (feature vector)
+        // Returns rank distribution for each item given its feature vector.
         public double[][] GetRankDistributions(Vector[] features)
         {
-            double[][] pairProbabilities = PairProbabilities(features);
-            double[][] rankDistributions = RankDistributions(pairProbabilities);
-            return rankDistributions;
+            int n = features.Length;
+            double[] scores = GetItemScores(features);
+            double sqrtTwoNoise = Math.Sqrt(2.0 * noise);
+
+            double[][] rankDists = new double[n][];
+            for (int i = 0; i < n; i++)
+            {
+                double[] pairProbs = new double[n - 1];
+                int k = 0;
+                for (int j = 0; j < n; j++)
+                {
+                    if (j == i) continue;
+                    // P(item i beats item j) = Phi((score_i - score_j) / sqrt(2*noise))
+                    pairProbs[k++] = MMath.NormalCdf((scores[i] - scores[j]) / sqrtTwoNoise);
+                }
+                rankDists[i] = ComputeRankDistribution(pairProbs);
+            }
+            return rankDists;
         }
 
-        // returns raw score for each item (feature vector)
         public double[] GetItemScores(Vector[] features)
         {
             double[] scores = new double[features.Length];
@@ -55,101 +45,37 @@ namespace PredictLtR
             return scores;
         }
 
-        //
-        // Private helper functions
-        //
-
-        double[][] PairProbabilities(Vector[] features)
+        // O(n²) DP: replaces the original O(2^n) RankFunc recursion.
+        // pairProbs[k] = P(item beats its k-th opponent).
+        // Returns rankDist where rankDist[r] = P(item ends up at rank r).
+        static double[] ComputeRankDistribution(double[] pairProbs)
         {
-            int numItems = features.Length;
-            int numPairs = numItems - 1;
+            int numRanks = pairProbs.Length + 1;
+            double[] dp = new double[numRanks];
+            dp[0] = 1.0;
 
-            double[][] pairProbabilities = new double[numItems][];
-
-            for (int i = 0; i < numItems; i++)
+            for (int i = 0; i < pairProbs.Length; i++)
             {
-                pairProbabilities[i] = new double[numPairs];
-                int ptr = 0;
-
-                double scoreA = Vector.InnerProduct(w, features[i]);
-
-                for (int j = 0; j < numItems; j++)
+                double[] next = new double[numRanks];
+                double p = pairProbs[i];
+                for (int r = 0; r < numRanks; r++)
                 {
-                    if (i == j)
-                        continue;
-
-                    double scoreB = Vector.InnerProduct(w, features[j]);
-
-                    pairProbabilities[i][ptr] = ComputePairProbability(scoreA, scoreB);
-                    ptr++;
+                    next[r] += dp[r] * p;                   // beats opponent: rank stays r
+                    if (r > 0) next[r] += dp[r - 1] * (1 - p); // loses: rank was r-1
                 }
+                dp = next;
             }
-
-            return pairProbabilities;
+            return dp;
         }
-
-        double[][] RankDistributions(double[][] pairProbs)
-        {
-            int numItems = pairProbs.Length;
-            int numRanks = numItems;
-
-            double[][] rankDists = new double[numItems][];
-
-            for (int i = 0; i < numItems; i++)
-            {
-                rankDists[i] = new double[numRanks];
-
-                for (int r = 0; r < numItems; r++)
-                    rankDists[i][r] = RankFunc(r, numItems - 2, pairProbs[i]);
-            }
-
-            return rankDists;
-        }
-
-        double ComputePairProbability(double scoreA, double scoreB)
-        {
-            XPrior = new Gaussian(scoreA, noise);
-            YPrior = new Gaussian(scoreB, noise);
-
-            XParam.ObservedValue = XPrior;
-            YParam.ObservedValue = YPrior;
-
-            Bernoulli probXBeatsY = engine.Infer<Bernoulli>(XBeatsY);
-
-            return probXBeatsY.GetProbTrue();
-        }
-
-        //
-        // static helper functions
-        //
 
         public static void PrintRankDistributions(double[][] rankDists)
         {
             for (int i = 0; i < rankDists.Length; i++)
             {
-                for (int j = 0; j < rankDists[i].Length; j++ )
-                {
-                    string line = string.Format("{0:0.000}", rankDists[i][j]);
-                    System.Console.Write(line + " ");
-                }
-                System.Console.WriteLine();
+                for (int j = 0; j < rankDists[i].Length; j++)
+                    Console.Write("{0:0.000} ", rankDists[i][j]);
+                Console.WriteLine();
             }
         }
-
-        public static double RankFunc(int r, int i, double[] p)
-        {
-            if (r < 0)
-                return 0.0;
-            if (i == -1)
-            {
-                if (r == 0)
-                    return 1.0;
-                else
-                    return 0.0;
-            }
-            else
-                return RankFunc(r - 1, i - 1, p) * (1 - p[i]) + RankFunc(r, i - 1, p) * p[i];
-        }
-
     }
 }

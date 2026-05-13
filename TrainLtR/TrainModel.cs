@@ -1,6 +1,7 @@
-﻿using Microsoft.ML.Probabilistic.Distributions;
+using Microsoft.ML.Probabilistic.Distributions;
 using Microsoft.ML.Probabilistic.Math;
 using Microsoft.ML.Probabilistic.Models;
+using Range = Microsoft.ML.Probabilistic.Models.Range;
 
 namespace TrainLtR
 {
@@ -10,110 +11,83 @@ namespace TrainLtR
         VariableArray<int> exampleSize;
         VariableArray<int> rankSize;
 
-        Microsoft.ML.Probabilistic.Models.Range example;  // over N examples in a dataset
-        Microsoft.ML.Probabilistic.Models.Range item;     // over M items in an example
-        Microsoft.ML.Probabilistic.Models.Range pair;     // over M-1 item pairs in an example
+        Range example;
+        Range item;
+        Range pair;
 
         VariableArray<VariableArray<double>, double[][]> scores;
         VariableArray<VariableArray<Vector>, Vector[][]> features;
-
         VariableArray<VariableArray<bool>, bool[][]> ranks;
 
         Variable<Vector> w;
-
         Variable<double> scoresNoise;
 
         public InferenceEngine engine;
 
         public TrainModel(int dimFeatures)
         {
-            //
-            // Dataset size
-            //
+            // Dataset size — declared as observed (data shape is known before inference).
+            numExamples = Variable.Observed(default(int)).Named(nameof(numExamples));
+            example = new Range(numExamples).Named(nameof(example));
 
-            numExamples = Variable.New<int>();
-            example = new Microsoft.ML.Probabilistic.Models.Range(numExamples);
+            exampleSize = Variable.Observed(default(int[]), example).Named(nameof(exampleSize));
+            item = new Range(exampleSize[example]).Named(nameof(item));
 
-            //
-            // Jagged 1-D arrays of arrays for item scores and features
-            //
+            rankSize = Variable.Observed(default(int[]), example).Named(nameof(rankSize));
+            pair = new Range(rankSize[example]).Named(nameof(pair));
 
-            exampleSize = Variable.Array<int>(example);
-            item = new Microsoft.ML.Probabilistic.Models.Range(exampleSize[example]);
+            // Observed data: declared as Variable.Observed so the compiler knows they are data, not latent.
+            features = Variable.Observed(default(Vector[][]), example, item).Named(nameof(features));
+            ranks = Variable.Observed(default(bool[][]), example, pair).Named(nameof(ranks));
 
-            scores = Variable.Array(Variable.Array<double>(item), example);
-            features = Variable.Array(Variable.Array<Vector>(item), example);
+            // Latent variable (inferred).
+            scores = Variable.Array(Variable.Array<double>(item), example).Named(nameof(scores));
 
-            //
-            // Jagged 1-D arrays for pairwise item ranks
-            //
+            // Model parameters with priors.
+            w = Variable.Random(new VectorGaussian(
+                Vector.Zero(dimFeatures),
+                PositiveDefiniteMatrix.Identity(dimFeatures))).Named(nameof(w));
+            scoresNoise = Variable.GammaFromShapeAndScale(1.0, 3.0).Named(nameof(scoresNoise));
 
-            rankSize = Variable.Array<int>(example);
-            pair = new Microsoft.ML.Probabilistic.Models.Range(rankSize[example]);
-
-            ranks = Variable.Array(Variable.Array<bool>(pair), example);
-
-            //
-            // Model parameters
-            //
-
-            w = Variable.VectorGaussianFromMeanAndVariance(Vector.Zero(dimFeatures),
-                                                           PositiveDefiniteMatrix.Identity(dimFeatures)).Named("w");
-
-            //
-            // Model
-            //
-
-            scoresNoise = Variable.GammaFromShapeAndScale(1.0, 3.0);
-
+            // Generative model.
             using (Variable.ForEach(example))
             {
                 using (Variable.ForEach(item))
                 {
-                    var mean = Variable.InnerProduct(w, features[example][item]);
-                    scores[example][item] = Variable.GaussianFromMeanAndPrecision(mean, scoresNoise);
+                    scores[example][item] = Variable.GaussianFromMeanAndPrecision(
+                        Variable.InnerProduct(w, features[example][item]), scoresNoise);
                 }
 
                 using (ForEachBlock pairBlock = Variable.ForEach(pair))
                 {
                     var idx = pairBlock.Index;
-
                     var diff = scores[example][idx + 1] - scores[example][idx];
-
-                    using (Variable.If(diff > 0))
-                        ranks[example][pair] = true;
-                    using (Variable.IfNot(diff > 0))
-                        ranks[example][pair] = false;
+                    ranks[example][pair] = (diff > 0);
                 }
             }
 
-            //
-            // Inference engine
-            //
-
             engine = new InferenceEngine();
+            engine.ShowProgress = false;
+            engine.Compiler.WriteSourceFiles = false;
             engine.NumberOfIterations = 50;
             engine.Compiler.UseParallelForLoops = true;
+
+            // Pre-compile to avoid compilation cost on the first Learn() call.
+            engine.GetCompiledInferenceAlgorithm(w);
         }
 
         public void Learn(int[] itemSizesData, int[] pairwiseSizesData,
-                          Vector[][] featuresData, bool[][] pairwiseData, 
+                          Vector[][] featuresData, bool[][] pairwiseData,
                           out VectorGaussian wPosterior,
                           out Gamma scoresNoisePosterior)
         {
             numExamples.ObservedValue = itemSizesData.Length;
-
             exampleSize.ObservedValue = itemSizesData;
             rankSize.ObservedValue = pairwiseSizesData;
-
             features.ObservedValue = featuresData;
-
             ranks.ObservedValue = pairwiseData;
 
-            // main model parameter inference
             wPosterior = engine.Infer<VectorGaussian>(w);
-
-            // aux model parameter inference
             scoresNoisePosterior = engine.Infer<Gamma>(scoresNoise);
         }
     }

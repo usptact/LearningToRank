@@ -1,6 +1,7 @@
-﻿using Microsoft.ML.Probabilistic.Distributions;
+using Microsoft.ML.Probabilistic.Distributions;
 using Microsoft.ML.Probabilistic.Math;
 using Microsoft.ML.Probabilistic.Models;
+using Range = Microsoft.ML.Probabilistic.Models.Range;
 
 namespace PredictLtR
 {
@@ -10,13 +11,12 @@ namespace PredictLtR
         VariableArray<int> exampleSize;
         VariableArray<int> rankSize;
 
-        Microsoft.ML.Probabilistic.Models.Range example;  // over examples in a dataset
-        Microsoft.ML.Probabilistic.Models.Range item;     // over items in an examples
-        Microsoft.ML.Probabilistic.Models.Range rank;     // over item pairs
+        Range example;
+        Range item;
+        Range rank;
 
         VariableArray<VariableArray<double>, double[][]> scores;
         VariableArray<VariableArray<Vector>, Vector[][]> features;
-
         VariableArray<VariableArray<bool>, bool[][]> ranks;
 
         Variable<VectorGaussian> wPrior;
@@ -29,61 +29,40 @@ namespace PredictLtR
 
         public PredictModel()
         {
-            //
-            // Dataset size
-            //
+            numExamples = Variable.Observed(default(int)).Named(nameof(numExamples));
+            example = new Range(numExamples).Named(nameof(example));
 
-            numExamples = Variable.New<int>();
-            example = new Microsoft.ML.Probabilistic.Models.Range(numExamples);
+            exampleSize = Variable.Observed(default(int[]), example).Named(nameof(exampleSize));
+            item = new Range(exampleSize[example]).Named(nameof(item));
 
-            //
-            // Jagged arrays for (items, features)
-            //
+            rankSize = Variable.Observed(default(int[]), example).Named(nameof(rankSize));
+            rank = new Range(rankSize[example]).Named(nameof(rank));
 
-            exampleSize = Variable.Array<int>(example);
-            item = new Microsoft.ML.Probabilistic.Models.Range(exampleSize[example]);
+            features = Variable.Observed(default(Vector[][]), example, item).Named(nameof(features));
+            scores = Variable.Array(Variable.Array<double>(item), example).Named(nameof(scores));
+            ranks = Variable.Array(Variable.Array<bool>(rank), example).Named(nameof(ranks));
 
-            scores = Variable.Array(Variable.Array<double>(item), example);
-            features = Variable.Array(Variable.Array<Vector>(item), example);
+            wPrior = Variable.New<VectorGaussian>().Named(nameof(wPrior));
+            w = Variable<Vector>.Random(wPrior).Named(nameof(w));
 
-            //
-            // Jagged array for item pair ranks
-            //
-
-            rankSize = Variable.Array<int>(example);
-            rank = new Microsoft.ML.Probabilistic.Models.Range(rankSize[example]);
-
-            ranks = Variable.Array(Variable.Array<bool>(rank), example);
-
-            //
-            // Model parameters
-            //
-
-            wPrior = Variable.New<VectorGaussian>();
-            w = Variable.Random<Vector, VectorGaussian>(wPrior);
-
-            //
-            // Model
-            //
-
-            scoresNoisePrior = Variable.New<Gamma>();
-            scoresNoise = Variable.Random<double, Gamma>(scoresNoisePrior);
+            scoresNoisePrior = Variable.New<Gamma>().Named(nameof(scoresNoisePrior));
+            scoresNoise = Variable<double>.Random(scoresNoisePrior).Named(nameof(scoresNoise));
 
             using (Variable.ForEach(example))
             {
                 using (Variable.ForEach(item))
                 {
-                    var mean = Variable.InnerProduct(w, features[example][item]);
-                    scores[example][item] = Variable.GaussianFromMeanAndPrecision(mean, scoresNoise);
+                    scores[example][item] = Variable.GaussianFromMeanAndPrecision(
+                        Variable.InnerProduct(w, features[example][item]), scoresNoise);
                 }
 
                 using (ForEachBlock pairBlock = Variable.ForEach(rank))
                 {
                     var idx = pairBlock.Index;
                     var diff = scores[example][idx + 1] - scores[example][idx];
+                    var positiveDiff = (diff > 0).Named("positiveDiff");
 
-                    var positiveDiff = diff > 0;
-
+                    // Soft constraints improve EP convergence vs. a hard bool assignment.
                     using (Variable.If(positiveDiff))
                         ranks[example][rank].SetTo(Variable.Bernoulli(0.999));
                     using (Variable.IfNot(positiveDiff))
@@ -91,13 +70,13 @@ namespace PredictLtR
                 }
             }
 
-            //
-            // Inference engine
-            //
-
             engine = new InferenceEngine();
+            engine.ShowProgress = false;
+            engine.Compiler.WriteSourceFiles = false;
             engine.NumberOfIterations = 5;
             engine.Compiler.UseParallelForLoops = false;
+
+            engine.GetCompiledInferenceAlgorithm(ranks);
         }
 
         public void SetPriors(VectorGaussian wPriorDist, Gamma scoresNoisePriorDist)
@@ -111,10 +90,8 @@ namespace PredictLtR
                             out Bernoulli[][] ranksPosterior)
         {
             numExamples.ObservedValue = itemSizesData.Length;
-
             exampleSize.ObservedValue = itemSizesData;
             rankSize.ObservedValue = pairwiseSizesData;
-
             features.ObservedValue = featuresData;
 
             ranksPosterior = engine.Infer<Bernoulli[][]>(ranks);

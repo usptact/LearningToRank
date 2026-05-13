@@ -2,7 +2,7 @@
 
 A Bayesian learning to rank implementation using Microsoft's Infer.NET probabilistic programming framework. This project implements pairwise preference learning using a linear model based on the TrueSkill/Thurstonian ranking approach.
 
-> ⚠️ **SCALABILITY WARNING**: This implementation has severe performance limitations for large queries. The prediction algorithm uses exponential-time recursive computation (O(2^n)) that becomes intractable for queries with more than 10-15 items. For queries with 40+ items (common in real datasets), prediction may stall or take hours to complete. Consider using this only for small-scale experiments or queries with very few items per query.
+> ⚠️ **SCALABILITY WARNING**: This implementation has performance limitations for large queries. Prediction runtime scales as O(n²) per query where n is the number of items, so queries with many items (40+) will be slow. Consider using this only for small-scale experiments or queries with a manageable number of items.
 
 ## Overview
 
@@ -15,14 +15,14 @@ The model learns pairwise preferences using a linear model where ties are not su
 
 ## Prerequisites
 
-- **.NET 8.0 SDK** or later
+- **.NET 10.0 SDK** or later
 - **Infer.NET** framework (v0.4.2504.701) - [GitHub](https://github.com/dotnet/infer) (open source, MIT license)
 
 ### Platform Support
 ✅ **Cross-platform**: Windows, Linux, and macOS  
 ✅ **Modern tooling**: Visual Studio 2022+, VS Code, or JetBrains Rider
 
-> **Note**: This solution has been modernized from .NET Framework 4.6.1 to .NET 8 with the latest Infer.NET framework.
+> **Note**: This solution has been modernized from .NET Framework 4.6.1 to .NET 10 with the latest Infer.NET framework.
 
 ## Algorithm
 
@@ -147,8 +147,8 @@ The `/data` folder contains example datasets:
 
 ### Scalability Limitations
 - **Query size**: Optimal for 2-10 items per query
-- **Maximum recommended**: 15 items per query
-- **Avoid**: Queries with 40+ items (exponential slowdown)
+- **Prediction**: O(n²) per query — manageable for moderate query sizes
+- **Training**: variational message passing with 50 iterations over all queries
 
 ### Optimization Tips
 - Use smaller query sizes when possible
@@ -163,7 +163,7 @@ This solution has been modernized from .NET Framework 4.6.1:
 
 | Component | Old Version | New Version |
 |-----------|-------------|-------------|
-| Framework | .NET Framework 4.6.1 | .NET 8 |
+| Framework | .NET Framework 4.6.1 | .NET 10 |
 | Infer.NET | 0.3.1810.501 | 0.4.2504.701 |
 | Project Format | Legacy .csproj | SDK-style |
 | Serialization | BinaryFormatter | JSON |
