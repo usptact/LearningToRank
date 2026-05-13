@@ -14,6 +14,10 @@ namespace PredictLtR
 
         public int dimFeatures;
 
+        // When set, caps feature dimensionality at this value so prediction data
+        // matches the dimension of a model trained on a different (smaller) dataset.
+        public int targetDimFeatures = 0;
+
         public Reader(string fileName)
         {
             fName = fileName;
@@ -21,6 +25,9 @@ namespace PredictLtR
 
         public Data Read()
         {
+            if (targetDimFeatures > 0)
+                dimFeatures = targetDimFeatures;
+
             List<List<Item>> dataset = ParseDataset();
             ExtractDataset(dataset);
 
@@ -90,7 +97,8 @@ namespace PredictLtR
 
                     int numFeatures = item.features.Length;
                     for (int k = 0; k < numFeatures; k++)
-                        xdata[i][j][item.features[k]] = item.feature_values[k];
+                        if (item.features[k] < dimFeatures)
+                            xdata[i][j][item.features[k]] = item.feature_values[k];
                 }
             }
         }
@@ -177,7 +185,8 @@ namespace PredictLtR
                 string[] parts = tokens[i].Split(':');
                 features[i - 2] = Int32.Parse(parts[0]) - 1;
                 featureValues[i - 2] = Double.Parse(parts[1]);
-                dimFeatures = Math.Max(dimFeatures, features[i - 2] + 1);
+                if (targetDimFeatures == 0)
+                    dimFeatures = Math.Max(dimFeatures, features[i - 2] + 1);
             }
         }
     }

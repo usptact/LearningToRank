@@ -46,6 +46,8 @@ namespace PredictLtR
 
             Console.WriteLine("Reading prediction data...");
             Reader predictReader = new Reader(predictFileName);
+            // w includes a bias term, so raw feature count = w.Count - 1.
+            predictReader.targetDimFeatures = wPosteriorDist.GetMean().Count - 1;
             Data predictData = predictReader.Read();
 
             int numPredict = predictData.features.Length;
