@@ -53,8 +53,7 @@ namespace PredictLtR
             int numPredict = predictData.features.Length;
             Console.WriteLine($"Processing {numPredict} queries...");
 
-            PredictDiscriminative pDisc = new PredictDiscriminative(wPosteriorDist.GetMean(),
-                                                                    scoresNoisePosteriorDist.GetMean());
+            PredictDiscriminative pDisc = new PredictDiscriminative(wPosteriorDist.GetMean());
 
             using (var writer = new StreamWriter(outputFileName, false, Encoding.UTF8))
             {

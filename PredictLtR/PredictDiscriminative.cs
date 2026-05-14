@@ -6,12 +6,10 @@ namespace PredictLtR
     class PredictDiscriminative
     {
         readonly Vector w;
-        readonly double noise;
 
-        public PredictDiscriminative(Vector wParam, double scoreNoise)
+        public PredictDiscriminative(Vector wParam)
         {
             w = wParam;
-            noise = scoreNoise;
         }
 
         // Returns rank distribution for each item given its feature vector.
@@ -19,7 +17,6 @@ namespace PredictLtR
         {
             int n = features.Length;
             double[] scores = GetItemScores(features);
-            double sqrtTwoNoise = Math.Sqrt(2.0 * noise);
 
             double[][] rankDists = new double[n][];
             for (int i = 0; i < n; i++)
@@ -29,8 +26,9 @@ namespace PredictLtR
                 for (int j = 0; j < n; j++)
                 {
                     if (j == i) continue;
-                    // P(item i beats item j) = Phi((score_i - score_j) / sqrt(2*noise))
-                    pairProbs[k++] = MMath.NormalCdf((scores[i] - scores[j]) / sqrtTwoNoise);
+                    // P(item i beats item j) = σ(score_i − score_j): logistic link,
+                    // consistent with the Plackett-Luce generative model (Gumbel noise).
+                    pairProbs[k++] = 1.0 / (1.0 + Math.Exp(scores[j] - scores[i]));
                 }
                 rankDists[i] = ComputeRankDistribution(pairProbs);
             }
@@ -60,7 +58,7 @@ namespace PredictLtR
                 double p = pairProbs[i];
                 for (int r = 0; r < numRanks; r++)
                 {
-                    next[r] += dp[r] * p;                   // beats opponent: rank stays r
+                    next[r] += dp[r] * p;                       // beats opponent: rank stays r
                     if (r > 0) next[r] += dp[r - 1] * (1 - p); // loses: rank was r-1
                 }
                 dp = next;

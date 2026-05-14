@@ -1,6 +1,6 @@
 # Learning to Rank (LtR) with Infer.NET
 
-A Bayesian learning-to-rank implementation using Microsoft's [Infer.NET](https://github.com/dotnet/infer) probabilistic programming framework. Implements pairwise preference learning with a linear TrueSkill/Thurstonian model.
+A Bayesian learning-to-rank implementation using Microsoft's [Infer.NET](https://github.com/dotnet/infer) probabilistic programming framework. Implements a Plackett-Luce top-1 listwise model with a linear Gaussian score model.
 
 > ⚠️ **Scalability**: Prediction is O(n²) per query where n is the number of items. Optimal for 2–10 items per query; avoid queries with 40+ items.
 
@@ -25,14 +25,12 @@ dotnet run --project PredictLtR -- model.json data/predict.ltr predictions.csv
 
 ## Algorithm
 
-The model uses a modified TrueSkill/Thurstonian graphical model with observed feature vectors. It learns:
+The model uses a **Plackett-Luce top-1 listwise** graphical model with observed feature vectors. It learns:
 
 - **`w`** — feature weight vector (VectorGaussian posterior)
-- **noise** — pairwise comparison uncertainty (Gamma posterior)
+- **noise** — score precision (Gamma posterior)
 
-For each query with `n` items, `n-1` pairwise preference observations are generated. Training uses variational message passing (50 iterations). Prediction computes pairwise win probabilities via `Φ((sᵢ - sⱼ) / √(2·noise))` and converts them to rank distributions via O(n²) DP.
-
-![TrueSkill/Thurstonian model for LtR](https://github.com/usptact/LearningToRank/blob/master/img/LtR%20Graphical%20Model.png)
+For each query with `n` items, a single top-1 observation is generated: the best-ranked item is observed to win a softmax draw over all items' latent scores (`winner ~ Discrete(Softmax(s₁, …, sₙ))`). Training uses variational message passing (VMP, 100 iterations) — required because the softmax factor in Infer.NET supports VMP only. Prediction computes pairwise win probabilities via the logistic link `σ(sᵢ − sⱼ)` and converts them to rank distributions via O(n²) DP.
 
 ## Data Format
 
@@ -45,9 +43,8 @@ For each query with `n` items, `n-1` pairwise preference observations are genera
 2 qid:1 1:0.3 2:0.8 3:0.9
 ```
 
-- Lower rank = better position
-- Items sharing a `qid` are compared pairwise
-- For 2-rank queries: shuffle items within each query; for multi-rank: sort by rank
+- Lower rank number = better position (rank 1 = best)
+- Items sharing a `qid` belong to the same query; the item with the lowest rank label is the observed winner
 
 **Output** — CSV with per-item rank probability distributions (rank 0 = best):
 ```

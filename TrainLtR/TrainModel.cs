@@ -1,3 +1,4 @@
+using Microsoft.ML.Probabilistic.Algorithms;
 using Microsoft.ML.Probabilistic.Distributions;
 using Microsoft.ML.Probabilistic.Math;
 using Microsoft.ML.Probabilistic.Models;
@@ -9,15 +10,13 @@ namespace TrainLtR
     {
         Variable<int> numExamples;
         VariableArray<int> exampleSize;
-        VariableArray<int> rankSize;
 
         Range example;
         Range item;
-        Range pair;
 
         VariableArray<VariableArray<double>, double[][]> scores;
         VariableArray<VariableArray<Vector>, Vector[][]> features;
-        VariableArray<VariableArray<bool>, bool[][]> ranks;
+        VariableArray<int> winner;
 
         Variable<Vector> w;
         Variable<double> scoresNoise;
@@ -26,30 +25,22 @@ namespace TrainLtR
 
         public TrainModel(int dimFeatures)
         {
-            // Dataset size — declared as observed (data shape is known before inference).
             numExamples = Variable.Observed(default(int)).Named(nameof(numExamples));
             example = new Range(numExamples).Named(nameof(example));
 
             exampleSize = Variable.Observed(default(int[]), example).Named(nameof(exampleSize));
             item = new Range(exampleSize[example]).Named(nameof(item));
 
-            rankSize = Variable.Observed(default(int[]), example).Named(nameof(rankSize));
-            pair = new Range(rankSize[example]).Named(nameof(pair));
-
-            // Observed data: declared as Variable.Observed so the compiler knows they are data, not latent.
             features = Variable.Observed(default(Vector[][]), example, item).Named(nameof(features));
-            ranks = Variable.Observed(default(bool[][]), example, pair).Named(nameof(ranks));
+            winner = Variable.Observed(default(int[]), example).Named(nameof(winner));
 
-            // Latent variable (inferred).
             scores = Variable.Array(Variable.Array<double>(item), example).Named(nameof(scores));
 
-            // Model parameters with priors.
             w = Variable.Random(new VectorGaussian(
                 Vector.Zero(dimFeatures),
                 PositiveDefiniteMatrix.Identity(dimFeatures))).Named(nameof(w));
             scoresNoise = Variable.GammaFromShapeAndScale(1.0, 3.0).Named(nameof(scoresNoise));
 
-            // Generative model.
             using (Variable.ForEach(example))
             {
                 using (Variable.ForEach(item))
@@ -58,34 +49,29 @@ namespace TrainLtR
                         Variable.InnerProduct(w, features[example][item]), scoresNoise);
                 }
 
-                using (ForEachBlock pairBlock = Variable.ForEach(pair))
-                {
-                    var idx = pairBlock.Index;
-                    var diff = scores[example][idx + 1] - scores[example][idx];
-                    ranks[example][pair] = (diff > 0);
-                }
+                // Plackett-Luce top-1 observation: the best-ranked item wins a softmax draw
+                // over all items in the query. This replaces the pairwise boolean observations
+                // of the Thurstonian model and uses VMP (softmax factor has no EP messages).
+                var probs = Variable.Softmax(scores[example]);
+                winner[example].SetTo(Variable.Discrete(probs));
             }
 
-            engine = new InferenceEngine();
+            engine = new InferenceEngine(new VariationalMessagePassing());
             engine.ShowProgress = false;
             engine.Compiler.WriteSourceFiles = false;
-            engine.NumberOfIterations = 50;
+            engine.NumberOfIterations = 100;
             engine.Compiler.UseParallelForLoops = true;
 
-            // Pre-compile to avoid compilation cost on the first Learn() call.
-            engine.GetCompiledInferenceAlgorithm(w);
+            engine.GetCompiledInferenceAlgorithm(w, scoresNoise);
         }
 
-        public void Learn(int[] itemSizesData, int[] pairwiseSizesData,
-                          Vector[][] featuresData, bool[][] pairwiseData,
-                          out VectorGaussian wPosterior,
-                          out Gamma scoresNoisePosterior)
+        public void Learn(int[] itemSizesData, Vector[][] featuresData, int[] winnerData,
+                          out VectorGaussian wPosterior, out Gamma scoresNoisePosterior)
         {
             numExamples.ObservedValue = itemSizesData.Length;
             exampleSize.ObservedValue = itemSizesData;
-            rankSize.ObservedValue = pairwiseSizesData;
             features.ObservedValue = featuresData;
-            ranks.ObservedValue = pairwiseData;
+            winner.ObservedValue = winnerData;
 
             wPosterior = engine.Infer<VectorGaussian>(w);
             scoresNoisePosterior = engine.Infer<Gamma>(scoresNoise);

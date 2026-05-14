@@ -39,9 +39,8 @@ namespace TrainLtR
             TrainModel trainModel = new TrainModel(dimFeatures);
 
             trainModel.Learn(trainData.sizes,
-                             trainData.pairwiseSizes,
                              trainData.features,
-                             trainData.pairwise,
+                             trainData.winners,
                              out VectorGaussian wPosteriorDist,
                              out Gamma scoresNoisePosteriorDist);
 
