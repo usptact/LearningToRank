@@ -30,7 +30,7 @@ $$\tau \sim \text{Gamma}(1,\, 3)$$
 
 $$s_{q,i} \mid \mathbf{w}, \tau \sim \mathcal{N}(\mathbf{w}^{\!\top}\mathbf{x}_{q,i},\ \tau^{-1}), \quad i = 1, \ldots, n_q$$
 
-$$\text{winner}_q \mid \mathbf{s}_q \sim \text{Discrete}\!\left(\operatorname{Softmax}(s_{q,1}, \ldots, s_{q,n_q})\right)$$
+$$\text{winner}_q \mid \mathbf{s}_q \sim \text{Discrete}\left(\text{Softmax}(s_{q,1}, \ldots, s_{q,n_q})\right)$$
 
 The observed winner for each query is the item with the lowest rank label (rank 1 = best in SVM-Light format). Each query contributes a single top-1 observation under the Plackett-Luce model.
 
