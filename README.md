@@ -1,13 +1,6 @@
 # Learning to Rank (LtR) with Infer.NET
 
-A Bayesian learning-to-rank implementation using Microsoft's [Infer.NET](https://github.com/dotnet/infer) probabilistic programming framework. Implements a Plackett-Luce top-1 listwise model with a linear Gaussian score model.
-
-> **Scalability**: Prediction is O(n²) per query where n is the number of items.
-
-## Prerequisites
-
-- .NET 10.0 SDK
-- Infer.NET v0.4.2504.701 (restored automatically via NuGet)
+A Bayesian learning-to-rank implementation of the Plackett-Luce top-1 listwise model using [Infer.NET](https://github.com/dotnet/infer).
 
 ## Quick Start
 
@@ -25,12 +18,33 @@ dotnet run --project PredictLtR -- model.json data/predict.ltr predictions.csv
 
 ## Algorithm
 
-The model uses a **Plackett-Luce top-1 listwise** graphical model with observed feature vectors. It learns:
+### Generative model
 
-- **`w`** — feature weight vector (VectorGaussian posterior)
-- **noise** — score precision (Gamma posterior)
+**Priors:**
 
-For each query with `n` items, a single top-1 observation is generated: the best-ranked item is observed to win a softmax draw over all items' latent scores (`winner ~ Discrete(Softmax(s₁, …, sₙ))`). Training uses variational message passing (VMP, 100 iterations) — required because the softmax factor in Infer.NET supports VMP only. Prediction computes pairwise win probabilities via the logistic link `σ(sᵢ − sⱼ)` and converts them to rank distributions via O(n²) DP.
+$$\mathbf{w} \sim \mathcal{N}(\mathbf{0},\, \mathbf{I})$$
+
+$$\tau \sim \text{Gamma}(1,\, 3)$$
+
+**For each query** $q$ with $n_q$ items and feature vectors $\mathbf{x}_{q,1}, \ldots, \mathbf{x}_{q,n_q}$:
+
+$$s_{q,i} \mid \mathbf{w}, \tau \sim \mathcal{N}(\mathbf{w}^{\!\top}\mathbf{x}_{q,i},\ \tau^{-1}), \quad i = 1, \ldots, n_q$$
+
+$$\text{winner}_q \mid \mathbf{s}_q \sim \text{Discrete}\!\left(\operatorname{Softmax}(s_{q,1}, \ldots, s_{q,n_q})\right)$$
+
+The observed winner for each query is the item with the lowest rank label (rank 1 = best in SVM-Light format). Each query contributes a single top-1 observation under the Plackett-Luce model.
+
+### Inference
+
+Posterior inference over $\mathbf{w}$ (VectorGaussian) and $\tau$ (Gamma) uses **variational message passing** (VMP, 100 iterations). VMP is required because the softmax factor in Infer.NET has no EP messages.
+
+### Prediction
+
+Item scores are computed as $s_i = \hat{\mathbf{w}}^{\!\top}\mathbf{x}_i$ using the posterior mean $\hat{\mathbf{w}}$. Pairwise win probabilities follow the logistic link, consistent with Plackett-Luce (Gumbel noise implies logistic pairwise):
+
+$$P(i \succ j) = \sigma(s_i - s_j) = \frac{1}{1 + e^{s_j - s_i}}$$
+
+An $O(n^2)$ dynamic program converts these pairwise probabilities into a full rank distribution for each item.
 
 ## Data Format
 
@@ -74,3 +88,9 @@ The `data/` folder contains LETOR MQ2008 benchmark datasets:
 | `train.ltr` | Full training set |
 | `predict.ltr` | Prediction set |
 | `test.small.ltr` / `test.sorted.ltr` | Test sets |
+
+## Further Reading
+
+- T.-Y. Liu, "Learning to Rank for Information Retrieval," *Foundations and Trends in Information Retrieval*, vol. 3, no. 3, pp. 225–331, 2009. A comprehensive survey covering pointwise, pairwise, and listwise approaches. [https://doi.org/10.1561/1500000016](https://doi.org/10.1561/1500000016)
+
+- Z. Cao, T. Qin, T.-Y. Liu, M.-F. Tsai, and H. Li, "Learning to Rank: From Pairwise Approach to Listwise Approach," *ICML*, 2007. Foundational paper introducing the listwise learning paradigm. [https://dl.acm.org/doi/10.1145/1273496.1273513](https://dl.acm.org/doi/10.1145/1273496.1273513)
