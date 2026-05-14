@@ -26,10 +26,9 @@ namespace TrainLtR
 
             Vector[][] features = GetVectorData();
             int[] sizes = GetSizesArray();
-            bool[][] pairwise = GetPairwiseRankingData();
-            int[] pairwiseSizes = GetPairwiseSizesArray();
+            int[] winners = GetWinnerIndices();
 
-            return new Data(features, sizes, pairwise, pairwiseSizes);
+            return new Data(features, sizes, winners);
         }
 
         List<List<Item>> ParseDataset()
@@ -116,28 +115,19 @@ namespace TrainLtR
             return data;
         }
 
-        bool[][] GetPairwiseRankingData()
+        // Winner index = position of the item with the lowest rank label (rank 1 = best in SVM-Light).
+        int[] GetWinnerIndices()
         {
             int numExamples = ydata.Length;
-            bool[][] ranks = new bool[numExamples][];
-
+            int[] winners = new int[numExamples];
             for (int i = 0; i < numExamples; i++)
             {
-                int numItems = ydata[i].Length;
-
-                if (numItems < 2)
-                    throw new InvalidOperationException("Item size must be at least 2!");
-
-                ranks[i] = new bool[numItems - 1];
-
-                for (int j = 0; j < numItems - 1; j++)
-                {
-                    int left = ydata[i][j + 1];
-                    int right = ydata[i][j];
-                    ranks[i][j] = left > right;
-                }
+                int bestRank = int.MaxValue, bestIdx = 0;
+                for (int j = 0; j < ydata[i].Length; j++)
+                    if (ydata[i][j] < bestRank) { bestRank = ydata[i][j]; bestIdx = j; }
+                winners[i] = bestIdx;
             }
-            return ranks;
+            return winners;
         }
 
         int[] GetSizesArray()
@@ -146,15 +136,6 @@ namespace TrainLtR
             int[] sizes = new int[numExamples];
             for (int i = 0; i < numExamples; i++)
                 sizes[i] = xdata[i].Length;
-            return sizes;
-        }
-
-        int[] GetPairwiseSizesArray()
-        {
-            int numExamples = xdata.Length;
-            int[] sizes = new int[numExamples];
-            for (int i = 0; i < numExamples; i++)
-                sizes[i] = xdata[i].Length - 1;
             return sizes;
         }
 
@@ -202,15 +183,13 @@ namespace TrainLtR
     {
         public Vector[][] features;
         public int[] sizes;
-        public bool[][] pairwise;
-        public int[] pairwiseSizes;
+        public int[] winners;
 
-        public Data(Vector[][] f, int[] s, bool[][] p, int[] ps)
+        public Data(Vector[][] f, int[] s, int[] w)
         {
             features = f;
             sizes = s;
-            pairwise = p;
-            pairwiseSizes = ps;
+            winners = w;
         }
     }
 }

@@ -27,20 +27,22 @@ Two independent .NET 10 console apps sharing no library code:
 
 **TrainLtR** — trains the model:
 - `Reader.cs` parses SVM-Light `.ltr` files into jagged `Vector[][]` arrays; it sets the instance `dimFeatures` field as a side effect of parsing, so it must be called before constructing `TrainModel`
-- `TrainModel.cs` defines the Infer.NET graphical model (TrueSkill/Thurstonian) and runs variational message passing (50 iterations) to infer the weight vector `w` (VectorGaussian) and noise (Gamma)
+- `TrainModel.cs` defines the Infer.NET graphical model (Plackett-Luce top-1 listwise) and runs **VMP** (100 iterations) to infer the weight vector `w` (VectorGaussian) and noise (Gamma). The softmax factor in Infer.NET only supports VMP, not EP.
 - `ModelSerializer.cs` flattens the posteriors to JSON (mean vector + variance matrix as flat array + Gamma shape/rate)
 
 **PredictLtR** — generates rank distributions for new queries:
-- `Reader.cs` (identical logic to TrainLtR, copy-pasted)
-- `PredictModel.cs` — Infer.NET model that accepts trained priors and infers pairwise rank booleans; unused by `Program.cs` but kept as an alternative generative prediction path
-- `PredictDiscriminative.cs` — the active prediction path; takes the posterior mean of `w` and noise, computes pairwise win probabilities via `MMath.NormalCdf`, then converts to rank distributions via O(n²) DP
+- `Reader.cs` (identical logic to TrainLtR, copy-pasted, with `targetDimFeatures` capping for dimension mismatch)
+- `PredictModel.cs` — Infer.NET model that accepts trained priors; **unused by `Program.cs`**, kept as an alternative generative prediction path
+- `PredictDiscriminative.cs` — the active prediction path; takes the posterior mean of `w`, computes pairwise win probabilities via the **logistic link** `σ(score_i − score_j)`, then converts to rank distributions via O(n²) DP
 
 ## Key Design Notes
 
 - The bias term is appended to every feature vector inside `Reader.GetVectorData()`, making the weight vector one dimension larger than the raw feature count (`dimFeatures + 1`).
-- Pairwise observations compare adjacent items by index, not by rank value ordering — so training data for 2-rank queries should be shuffled, while multi-rank data should be sorted by rank before feeding to the model.
-- The model serialization format changed from binary (old .NET Framework version) to JSON in the current version; old `.bin` files in `data/` are not compatible with the current loader.
+- Training uses the **Plackett-Luce top-1** observation per query: `winner[example] ~ Discrete(Softmax(scores[example]))` where `winner` is the index of the item with the lowest rank label (rank 1 = best in SVM-Light format). This replaces the old pairwise bool observations.
+- Prediction uses the **logistic/sigmoid** link `P(i beats j) = 1/(1+exp(score_j − score_i))`, consistent with the Plackett-Luce generative model (Gumbel noise → logistic pairwise probability).
+- The model serialization format is JSON; old `.bin` files in `data/` are not compatible.
 - `Reader.dimFeatures` is an instance field; access it via the reader instance (`trainReader.dimFeatures`), not as a static.
-- Observed data arrays in `TrainModel` are declared with `Variable.Observed(default(T[][]), outerRange, innerRange)` (from Infer.NET's ChessAnalysis pattern). This is required for pre-compilation via `engine.GetCompiledInferenceAlgorithm()` to work — declaring with `Variable.Array` leaves the variable undefined and causes a build-time error.
-- `PredictDiscriminative` uses `MMath.NormalCdf` directly instead of Infer.NET inference for pairwise win probabilities; rank distributions are computed via O(n²) DP rather than O(2^n) recursion.
-- `PredictModel` exists but is not used by `PredictLtR/Program.cs` (which uses `PredictDiscriminative` instead). `PredictModel` uses the full posterior over `w`; `PredictDiscriminative` uses only the posterior mean.
+- Observed data arrays in `TrainModel` are declared with `Variable.Observed(default(T[][]), outerRange, innerRange)` (from Infer.NET's ChessAnalysis pattern). This is required for pre-compilation via `engine.GetCompiledInferenceAlgorithm()` to work.
+- `PredictDiscriminative` does not use the `scoresNoise` posterior at prediction time — only the posterior mean of `w` is needed for the logistic link.
+- `PredictModel` exists but is not used by `PredictLtR/Program.cs` (which uses `PredictDiscriminative` instead).
+- If `Variable.Softmax` fails to compile with a variable-size range (different item counts per query), the fallback is to pad all queries to `max_n` items with all-zero feature vectors; the bias-only padding items receive near-zero scores and negligible softmax weight.
