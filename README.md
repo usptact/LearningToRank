@@ -2,7 +2,7 @@
 
 A Bayesian learning-to-rank implementation using Microsoft's [Infer.NET](https://github.com/dotnet/infer) probabilistic programming framework. Implements a Plackett-Luce top-1 listwise model with a linear Gaussian score model.
 
-> ⚠️ **Scalability**: Prediction is O(n²) per query where n is the number of items. Optimal for 2–10 items per query; avoid queries with 40+ items.
+> **Scalability**: Prediction is O(n²) per query where n is the number of items.
 
 ## Prerequisites
 

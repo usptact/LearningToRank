@@ -45,4 +45,3 @@ Two independent .NET 10 console apps sharing no library code:
 - Observed data arrays in `TrainModel` are declared with `Variable.Observed(default(T[][]), outerRange, innerRange)` (from Infer.NET's ChessAnalysis pattern). This is required for pre-compilation via `engine.GetCompiledInferenceAlgorithm()` to work.
 - `PredictDiscriminative` does not use the `scoresNoise` posterior at prediction time — only the posterior mean of `w` is needed for the logistic link.
 - `PredictModel` exists but is not used by `PredictLtR/Program.cs` (which uses `PredictDiscriminative` instead).
-- If `Variable.Softmax` fails to compile with a variable-size range (different item counts per query), the fallback is to pad all queries to `max_n` items with all-zero feature vectors; the bias-only padding items receive near-zero scores and negligible softmax weight.

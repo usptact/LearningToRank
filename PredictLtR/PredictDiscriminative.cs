@@ -66,14 +66,5 @@ namespace PredictLtR
             return dp;
         }
 
-        public static void PrintRankDistributions(double[][] rankDists)
-        {
-            for (int i = 0; i < rankDists.Length; i++)
-            {
-                for (int j = 0; j < rankDists[i].Length; j++)
-                    Console.Write("{0:0.000} ", rankDists[i][j]);
-                Console.WriteLine();
-            }
-        }
     }
 }
