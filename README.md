@@ -2,6 +2,8 @@
 
 A Bayesian learning-to-rank implementation of the Plackett-Luce top-1 listwise model using [Infer.NET](https://github.com/dotnet/infer).
 
+Plackett-Luce is a listwise model: it scores all items in a query jointly rather than comparing pairs or scoring items in isolation. This makes it more label-efficient than pairwise approaches (one observation per query instead of O(n²) pairs) and avoids the imbalance problems of pointwise regression. Crucially, observing only the top-ranked item is a sufficient statistic under the Plackett-Luce distribution, so no full ranking is needed during training — a weak supervision signal that is common in real retrieval logs. The probabilistic formulation also enables a full Bayesian treatment: rather than a point estimate of the weight vector, we obtain a posterior distribution that captures uncertainty and can be updated incrementally as new data arrives.
+
 ## Quick Start
 
 ```bash
